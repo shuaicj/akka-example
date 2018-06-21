@@ -12,7 +12,7 @@ import akka.event.LoggingAdapter;
  */
 public class Dancer extends AbstractActor {
 
-    private final LoggingAdapter logger = Logging.getLogger(getContext().getSystem(), this);
+    private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
 
     private final String name;
 
@@ -21,13 +21,23 @@ public class Dancer extends AbstractActor {
     }
 
     public static Props props(String dancer) {
-        return Props.create(Dancer.class, () -> new Dancer(dancer));
+        return Props.create(Dancer.class, dancer);
+    }
+
+    @Override
+    public void preStart() {
+        log.info("{} started!", name);
+    }
+
+    @Override
+    public void postStop() {
+        log.info("{} stopped!", name);
     }
 
     @Override
     public Receive createReceive() {
         return receiveBuilder()
-                .match(Dance.class, dance -> logger.info("{} is dancing {}!", name, dance.name))
+                .match(Dance.class, dance -> log.info("{} is dancing {}!", name, dance.name))
                 .build();
     }
 

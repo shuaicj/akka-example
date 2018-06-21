@@ -1,11 +1,13 @@
 package shuaicj.example.akka;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import akka.event.Logging;
+import akka.event.LoggingAdapter;
 
 /**
  * The director actor.
@@ -14,16 +16,44 @@ import akka.actor.Props;
  */
 public class Director extends AbstractActor {
 
-    private final List<ActorRef> singers;
-    private final List<ActorRef> dancers;
+    private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+
+    final List<ActorRef> singers = new ArrayList<>();
+    final List<ActorRef> dancers = new ArrayList<>();
+
+    public Director() {}
 
     public Director(List<ActorRef> singers, List<ActorRef> dancers) {
-        this.singers = Collections.unmodifiableList(singers);
-        this.dancers = Collections.unmodifiableList(dancers);
+        this.singers.addAll(singers);
+        this.dancers.addAll(dancers);
+    }
+
+    public static Props props() {
+        return Props.create(Director.class);
     }
 
     public static Props props(List<ActorRef> singers, List<ActorRef> dancers) {
-        return Props.create(Director.class, () -> new Director(singers, dancers));
+        return Props.create(Director.class, singers, dancers);
+    }
+
+    @Override
+    public void preStart() {
+        log.info("Director started!");
+        if (singers.isEmpty() && dancers.isEmpty()) {
+            ActorRef singer1 = getContext().actorOf(Singer.props("Singer 1"), "singer-1");
+            ActorRef singer2 = getContext().actorOf(Singer.props("Singer 2"), "singer-2");
+            singers.add(singer1);
+            singers.add(singer2);
+            ActorRef dancer1 = getContext().actorOf(Dancer.props("Dancer 1"), "dancer-1");
+            ActorRef dancer2 = getContext().actorOf(Dancer.props("Dancer 2"), "dancer-2");
+            dancers.add(dancer1);
+            dancers.add(dancer2);
+        }
+    }
+
+    @Override
+    public void postStop() {
+        log.info("Director stopped!");
     }
 
     @Override
